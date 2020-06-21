@@ -40,16 +40,16 @@ def delete_folder_files(folder_id):
 delete_folder_files(COLAB_FOLDER_ID)
 
 # Create new extra folder
-extra_folder = drive.CreateFile({'title': 'data', 'mimeType': 'application/vnd.google-apps.folder',
-                                 'parents': [{'id': COLAB_FOLDER_ID}]})
-extra_folder.Upload()
+data_folder = drive.CreateFile({'title': 'data', 'mimeType': 'application/vnd.google-apps.folder',
+                                'parents': [{'id': COLAB_FOLDER_ID}]})
+data_folder.Upload()
 
 file_dict = {
-    'ubigeos.csv': {'local_path': extra_path,
-                    'drive_folder_id': extra_folder['id'],
+    'ubigeo_distritos.csv': {'local_path': extra_path,
+                    'drive_folder_id': data_folder['id'],
                     'type': 'text/csv'},
-    'casos_positivos_covid19.csv': {'local_path': clean_data_path,
-                                    'drive_folder_id': extra_folder['id'],
+    'data_limpia_datos_covid.csv': {'local_path': clean_data_path,
+                                    'drive_folder_id': data_folder['id'],
                                     'type': 'text/csv'},
     'Exploracion.ipynb': {'local_path': './', 'drive_folder_id': COLAB_FOLDER_ID,
                           'type': 'application/vnd.google.colaboratory'}

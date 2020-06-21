@@ -16,7 +16,7 @@ def formatear_datos(input_file, output_file, delimiter=";", doctype="csv"):
     return True
 
 
-input_dir = './'
+input_dir = './data_original/'
 output_dir = './data_limpia/'
 
 files = [

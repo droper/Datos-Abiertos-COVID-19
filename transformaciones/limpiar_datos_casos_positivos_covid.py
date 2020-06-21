@@ -4,7 +4,7 @@ import pandas as pd
 import unidecode
 
 casos_df = pd.read_csv(
-    "./data_original_covid_positivo/datos_abiertos_siscovid_2020_05_22.csv",
+    "./data_original/datos_abiertos_siscovid_2020_05_22.csv",
     parse_dates=["FECHA_NACIMIENTO", "FECHA_PRUEBA"],
     encoding="latin",
 )
@@ -13,7 +13,7 @@ ubigeo_df = pd.read_csv(
     "./extras/ubigeo_distritos.csv", dtype={"ubigeo": "string"}
 )
 
-# Cambiando mayusculas
+# Cambiando mayúsculas
 casos_df.columns = [col.lower() for col in casos_df.columns]
 casos_df[["sexo", "departamento", "provincia", "distrito"]] = casos_df[
     ["sexo", "departamento", "provincia", "distrito"]
@@ -89,6 +89,7 @@ for correccion in correcciones_distrito:
 correcciones_provincia = [
     ("Callao", "Prov. Const. Del Callao", "Callao"),
     ("Ica", "Nazca", "Nasca"),
+    ("Amazonas", "Rodriguez De Mendoza", "Rodriguez de Mendoza")
 ]
 
 for correccion in correcciones_provincia:
@@ -158,100 +159,103 @@ casos_df.to_csv(
     "./data_limpia/data_limpia_datos_siscovid_2020_05_22.csv", index=False
 )
 
-# ### Nueva data 2020-05-24
 
-new_covid_data = pd.read_csv(
-    "./data_original_covid_positivo/datos_abiertos_siscovid_2020_05_24.csv",
-    parse_dates=["FECHA_RESULTADO"],
-    encoding="latin",
-    dtype={"EDAD": pd.Int64Dtype()},
-)
-new_covid_data.columns = [col.lower() for col in new_covid_data.columns]
+def nueva_data_positivos_covid(original_csv_path, dir_dest, nombre_dest):
+    """Formato de la data a partir del 2020-05-24"""
 
-# Uniformizando minusculas y limpiando caracteres especiales
-new_covid_data[["departamento", "provincia", "distrito"]] = new_covid_data[
-    ["departamento", "provincia", "distrito"]
-].applymap(lambda x: unidecode.unidecode(x) if isinstance(x, str) else x)
-new_covid_data[
-    ["sexo", "departamento", "provincia", "distrito"]
-] = new_covid_data[["sexo", "departamento", "provincia", "distrito"]].apply(
-    lambda x: x.str.title().str.strip()
-)
-
-# Correcciones en distritos y provincias para uniformizar nombres
-Dcorreccion = namedtuple(
-    "RemplazarDistrito", ["departamento", "provincia", "distrito", "cambio"]
-)
-Pcorreccion = namedtuple(
-    "RemplazarDepartamento", ["departamento", "provincia", "cambio"]
-)
-
-correcciones_distrito = [
-    (
-        "Ayacucho",
-        "Huamanga",
-        "Andres Avelino Caceres",
-        "Andres Avelino Caceres Dorregaray",
-    ),
-    (
-        "Ayacucho",
-        "Huamanga",
-        "Andres Avelino Caceres D.",
-        "Andres Avelino Caceres Dorregaray",
-    ),
-    (
-        "Tacna",
-        "Tacna",
-        "Coronel Gregorio Albarracin L.",
-        "Coronel Gregorio Albarracin Lanchipa",
-    ),
-    (
-        "Puno",
-        "Sandia",
-        "San Pedro De Putina Puncu",
-        "San Pedro De Putina Punco",
-    ),
-    ("Ica", "Nazca", "Nazca", "Nasca"),
-]
-
-for correccion in correcciones_distrito:
-    data_correccion = Dcorreccion(*correccion)
-    new_covid_data.loc[
-        (new_covid_data["departamento"] == data_correccion.departamento)
-        & (new_covid_data["provincia"] == data_correccion.provincia)
-        & (new_covid_data["distrito"] == data_correccion.distrito),
-        "distrito",
-    ] = data_correccion.cambio
-
-correcciones_provincia = [("Ica", "Nazca", "Nasca")]
-
-for correccion in correcciones_provincia:
-    data_correccion = Pcorreccion(*correccion)
-    new_covid_data.loc[
-        (new_covid_data["departamento"] == data_correccion.departamento)
-        & (new_covid_data["provincia"] == data_correccion.provincia),
-        "provincia",
-    ] = data_correccion.cambio
-
-# Convertir data Region a Lima
-new_covid_data.loc[new_covid_data.departamento == 'Lima Region', 'departamento'] = 'Lima'
-
-# Ayuda para unir localiazaciones con ubigeo
-localizacion = (
-    new_covid_data.groupby(
-        ["departamento", "provincia", "distrito"], as_index=False
+    new_covid_data = pd.read_csv(
+        original_csv_path,
+        parse_dates=["FECHA_RESULTADO"],
+        encoding="latin",
+        dtype={"EDAD": pd.Int64Dtype()},
     )
-        .count()
-        .loc[:, ["departamento", "provincia", "distrito"]]
-)
-merge_ubigeos = localizacion.merge(
-    ubigeo_df, how="left", on=["departamento", "provincia", "distrito"]
-)
 
-merge_ubigeos = localizacion.merge(
-    ubigeo_df, how="left", on=["departamento", "provincia", "distrito"]
-)
+    # Uniformizando minusculas
+    new_covid_data.columns = [col.lower() for col in new_covid_data.columns]
 
-new_covid_data.to_csv(
-    "./data_limpia/data_limpia_datos_covid_2020_05_24.csv", index=False
-)
+    # Limpiando caracteres especiales
+    new_covid_data[["departamento", "provincia", "distrito"]] = new_covid_data[
+        ["departamento", "provincia", "distrito"]
+    ].applymap(lambda x: unidecode.unidecode(x) if isinstance(x, str) else x)
+    # Eliminando espacios en blanco
+    new_covid_data[
+        ["sexo", "departamento", "provincia", "distrito"]
+    ] = new_covid_data[["sexo", "departamento", "provincia", "distrito"]].apply(
+        lambda x: x.str.title().str.strip()
+    )
+
+    # Correcciones en distritos y provincias para uniformizar nombres
+    Dcorreccion = namedtuple(
+        "RemplazarDistrito", ["departamento", "provincia", "distrito", "cambio"]
+    )
+    Pcorreccion = namedtuple(
+        "RemplazarDepartamento", ["departamento", "provincia", "cambio"]
+    )
+
+    correcciones_distrito = [
+        (
+            "Ayacucho",
+            "Huamanga",
+            "Andres Avelino Caceres",
+            "Andres Avelino Caceres Dorregaray",
+        ),
+        (
+            "Ayacucho",
+            "Huamanga",
+            "Andres Avelino Caceres D.",
+            "Andres Avelino Caceres Dorregaray",
+        ),
+        (
+            "Tacna",
+            "Tacna",
+            "Coronel Gregorio Albarracin L.",
+            "Coronel Gregorio Albarracin Lanchipa",
+        ),
+        (
+            "Puno",
+            "Sandia",
+            "San Pedro De Putina Puncu",
+            "San Pedro De Putina Punco",
+        ),
+        ("Ica", "Nazca", "Nazca", "Nasca"),
+    ]
+
+    for correccion in correcciones_distrito:
+        data_correccion = Dcorreccion(*correccion)
+        new_covid_data.loc[
+            (new_covid_data["departamento"] == data_correccion.departamento)
+            & (new_covid_data["provincia"] == data_correccion.provincia)
+            & (new_covid_data["distrito"] == data_correccion.distrito),
+            "distrito",
+        ] = data_correccion.cambio
+
+    correcciones_provincia = [
+        ("Ica", "Nazca", "Nasca"),
+        ("Amazonas", "Rodriguez De Mendoza", "Rodriguez de Mendoza")
+    ]
+
+    for correccion in correcciones_provincia:
+        data_correccion = Pcorreccion(*correccion)
+        new_covid_data.loc[
+            (new_covid_data["departamento"] == data_correccion.departamento)
+            & (new_covid_data["provincia"] == data_correccion.provincia),
+            "provincia",
+        ] = data_correccion.cambio
+
+    # Convertir data Region a Lima
+    new_covid_data.loc[new_covid_data.departamento == 'Lima Region', 'departamento'] = 'Lima'
+
+    # Agregar ubigeo a data de casos positivos
+    new_covid_data = new_covid_data.merge(
+        ubigeo_df, how='left', on=["departamento", "provincia", "distrito"]
+    )
+
+    new_covid_data.to_csv(
+        dir_dest + nombre_dest,
+        index=False
+    )
+
+
+nueva_data_positivos_covid("./data_original/datos_abiertos_siscovid_2020_06_13.csv",
+                           "./data_limpia/",
+                           "data_limpia_datos_covid.csv")
