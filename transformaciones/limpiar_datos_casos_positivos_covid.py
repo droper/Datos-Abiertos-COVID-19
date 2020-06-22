@@ -217,6 +217,12 @@ def nueva_data_positivos_covid(original_csv_path, dir_dest, nombre_dest):
             "San Pedro De Putina Puncu",
             "San Pedro De Putina Punco",
         ),
+        ("Lima", "Lima", "San Martin De Porres", "San Martin de Porres"),
+        ("Lima", "Lima", "Santiago De Surco", "Santiago de Surco"),
+        ("Lima", "Lima", "San Juan De Lurigancho", "San Juan de Lurigancho"),
+        ("Lima", "Lima", "San Juan De Miraflores", "San Juan de Miraflores"),
+        ("Lima", "Lima", "Magdalena Del Mar", "Magdalena del Mar"),
+        ("Lima", "Lima", "Villa Maria Del Triunfo", "Villa Maria del Triunfo"),
         ("Ica", "Nazca", "Nazca", "Nasca"),
     ]
 
